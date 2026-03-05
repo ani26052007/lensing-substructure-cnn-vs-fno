@@ -1,0 +1,11 @@
+dataset/
+checkpoints/
+runs/
+__pycache__/
+
+*.zip
+*.pth
+*.pt
+*.log
+.env
+.DS_Store
