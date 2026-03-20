@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Models
+*.pth
+*.pt
+
+# Numpy
+*.npy
+
+# Specific dataset ignores
+Common Test 1/dataset/
+Specific Test IV/dataset/
+
+# Train/Test folders
+Specific Test V. Lens Finding & Data Pipelines/train_*/
+Specific Test V. Lens Finding & Data Pipelines/test_*/
+
+# VS Code
+.vscode/
+
+# System
+.DS_Store
