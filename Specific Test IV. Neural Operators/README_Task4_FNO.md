@@ -1,12 +1,12 @@
-# Specific Test IV. Neural Operators
+# Fourier Neural Operator for Gravitational Lens Substructure Classification
 
-Neural Operator architecture for gravitational lens substructure classification, using a Fourier Neural Operator (FNO) backbone with polar-domain input channels, benchmarked against the ConvNeXt V2 result from Common Test I.
+Neural Operator architecture for gravitational lens substructure classification, using a Fourier Neural Operator (FNO) backbone with polar-domain input channels, benchmarked against the ConvNeXt V2 result from Task I.
 
 ---
 
 ## Task
 
-Build a classifier for the same 3-class lensing problem (`no_sub` / `subhalo` / `vortex`) using a **Fourier Neural Operator** as the backbone feature extractor instead of a standard CNN, and compare its performance against Common Test I.
+Build a classifier for the same 3-class lensing problem (`no_sub` / `subhalo` / `vortex`) using a **Fourier Neural Operator** as the backbone feature extractor instead of a standard CNN, and compare its performance against Task I.
 
 ---
 
@@ -20,7 +20,7 @@ Standard CNNs apply learned convolutional filters locally in spatial coordinates
 | Operation domain | Spatial (pixel space) | Frequency (Fourier space) |
 | Feature type | Local edges, textures | Global periodic / ring-like structures |
 | Inductive bias | Translation equivariance | Spectral frequency selectivity |
-| Parameter efficiency | O(k²·C²) per layer | O(modes·C²),  independent of image size |
+| Parameter efficiency | O(k²·C²) per layer | O(modes·C²), independent of image size |
 
 The Einstein ring in lensing images is an inherently **global, ring-shaped structure**. A single FNO spectral convolution sees the entire ring at once, whereas a CNN needs many stacked layers to accumulate global context. This makes FNO a theoretically well-motivated architecture for lensing classification.
 
@@ -35,9 +35,9 @@ output(x,y) = Σ_k kernel(k) * input(x+k, y+k)
 
 In a SpectralConv2d (FNO layer):
 ```
-1. FFT the input: X̂ = FFT2(input)
-2. Multiply low-frequency modes by learned complex weights: Ŷ = X̂[:modes] * W_complex
-3. IFFT back to spatial: output = IFFT2(Ŷ)
+1. FFT the input:                    X̂ = FFT2(input)
+2. Multiply low-frequency modes:     Ŷ = X̂[:modes] * W_complex
+3. IFFT back to spatial:             output = IFFT2(Ŷ)
 ```
 
 Each FNO block adds a 1×1 bypass convolution (identity-like residual) that preserves fine spatial detail not captured in the truncated frequency spectrum.
@@ -53,7 +53,7 @@ Standard CNN channels (gradient magnitude, Laplacian) are local features that do
 | **0** | Raw (Cartesian) | Raw image flux | Baseline spatial view |
 | **1** | Polar transform | Cartesian → Polar remapping | Einstein ring → horizontal stripe; substructure → vertical spike; FNO frequency modes now align with ring structure |
 | **2** | Angular gradient `\|dI/dθ\|` | Per-pixel angular intensity change | Localizes substructure along the ring arc in polar space |
-| **3** | Radial deviation `\|I − ring_mean\|` | Departure from radial symmetry | Directly encodes symmetry breaking, the defining signature of subhalos and vortices |
+| **3** | Radial deviation `\|I − ring_mean\|` | Departure from radial symmetry | Directly encodes symmetry breaking — the defining signature of subhalos and vortices |
 
 **Channel selection rationale (from ablation study):**
 
@@ -117,7 +117,7 @@ Input: (B, 4, 150, 150)  ← 4-channel physics input
 - Patience increased to 20
 - Full network unfrozen throughout (FNO is trained from scratch, no pretrained weights)
 
-**Note:** Unlike Common Test I (which used ImageNet pretrained weights), the FNO is trained entirely from the lensing dataset. This is both a limitation and a design choice: no pretrained FNO weights exist for this domain, and the architecture's global receptive field provides a strong inductive bias that partially compensates.
+**Note:** Unlike Task I (which used ImageNet pretrained weights), the FNO is trained entirely from the lensing dataset. This is both a limitation and a design choice: no pretrained FNO weights exist for this domain, and the architecture's global receptive field provides a strong inductive bias that partially compensates.
 
 ---
 
@@ -129,12 +129,12 @@ A **per-class threshold grid search** was also performed over `[0.0, 0.75)` in s
 
 ---
 
-## Results & Comparison with Common Test I
+## Results & Comparison with Task I
 
 | Model | Architecture | Val Macro AUC | Val Accuracy |
 |-------|-------------|---------------|--------------|
-| **Common Test I** | ConvNeXt V2 Tiny (pretrained, 3-ch) | 0.9819 | 91.17% |
-| **Specific Test IV** | FNO2d from scratch (4-ch polar) | 0.9698 | 0.8759 |
+| **Task I** | ConvNeXt V2 Tiny (pretrained, 3-ch) | 0.9819 | 91.17% |
+| **Task IV** | FNO2d from scratch (4-ch polar) | 0.9698 | 87.59% |
 
 | Task I ROC | Task IV ROC |
 |------------|-------------|
@@ -142,7 +142,7 @@ A **per-class threshold grid search** was also performed over `[0.0, 0.75)` in s
 
 **Key differences driving the performance gap:**
 
-1. **Pretraining:** ConvNeXt V2 benefits from ImageNet-1k FCMAE pretraining, 1.2M images of rich visual features. FNO is initialized randomly and must learn everything from 30k lensing samples.
+1. **Pretraining:** ConvNeXt V2 benefits from ImageNet-1k FCMAE pretraining — 1.2M images of rich visual features. FNO is initialized randomly and must learn everything from 30k lensing samples.
 
 2. **Parameter count:** ConvNeXt V2 Tiny has ~28M parameters with a heavily regularized, proven architecture. The FNO classifier is smaller and trained without transfer learning.
 
@@ -164,33 +164,23 @@ FNO was selected over DeepONet for this classification task because:
 
 **How FNO replaces the CNN feature extractor:**
 
-In a standard CNN pipeline, convolutional layers build up spatial features through local kernels stacked to achieve increasing receptive fields. In the FNO pipeline, the SpectralConv2d layer immediately sees the entire image through the FFT, the 20 retained frequency modes correspond to the scale range of arc morphology features (roughly 7–75 pixel wavelengths). The 1×1 bypass convolution in each FNO block is the only local operation, preserving fine-grain spatial detail that the truncated spectrum discards.
+In a standard CNN pipeline, convolutional layers build up spatial features through local kernels stacked to achieve increasing receptive fields. In the FNO pipeline, the SpectralConv2d layer immediately sees the entire image through the FFT — the 20 retained frequency modes correspond to the scale range of arc morphology features (roughly 7–75 pixel wavelengths). The 1×1 bypass convolution in each FNO block is the only local operation, preserving fine-grain spatial detail that the truncated spectrum discards.
+
+---
 
 ## Grad-CAM Validation
 
 ![Grad-CAM](images_T4/grad_cam.png)
 
-The FNO attention maps reveal a qualitatively different feature extraction 
-strategy compared to the ConvNeXt V2 baseline:
+The FNO attention maps reveal a qualitatively different feature extraction strategy compared to the ConvNeXt V2 baseline:
 
-- **no_sub (row 1):** Attention distributes across the entire Einstein ring 
-  simultaneously — the model assesses full ring geometry and symmetry in a 
-  single global operation, consistent with FNO's unbounded receptive field
-- **subhalo (row 2):** Ring-tracing attention with concentrated hot spots at 
-  arc discontinuity locations — the model detects subhalo-induced breaks in 
-  arc continuity by comparing the full ring globally
-- **vortex (row 3):** High attention along the partial arc length and at the 
-  isolated arc fragment — correctly identifies the broken, asymmetric ring 
-  structure characteristic of vortex substructure
+- **no_sub (row 1):** Attention distributes across the entire Einstein ring simultaneously — the model assesses full ring geometry and symmetry in a single global operation, consistent with FNO's unbounded receptive field
+- **subhalo (row 2):** Ring-tracing attention with concentrated hot spots at arc discontinuity locations — the model detects subhalo-induced breaks in arc continuity by comparing the full ring globally
+- **vortex (row 3):** High attention along the partial arc length and at the isolated arc fragment — correctly identifies the broken, asymmetric ring structure characteristic of vortex substructure
 
-The concentric ripple pattern visible in all heatmaps is the expected spatial 
-signature of Grad-CAM gradients backpropagated through the IFFT operation — 
-it confirms gradients are correctly flowing through the spectral convolution 
-pathway rather than bypassing it through the 1×1 residual branch.
+The concentric ripple pattern visible in all heatmaps is the expected spatial signature of Grad-CAM gradients backpropagated through the IFFT operation — it confirms gradients are correctly flowing through the spectral convolution pathway rather than bypassing it through the 1×1 residual branch.
 
-Compared to the ConvNeXt baseline (which attends to local blobs and patches), 
-the FNO attends to the ring as a continuous global structure, the architectural 
-difference is made visually explicit in these maps.
+Compared to the ConvNeXt baseline (which attends to local blobs and patches), the FNO attends to the ring as a continuous global structure — the architectural difference is made visually explicit in these maps.
 
 ---
 
