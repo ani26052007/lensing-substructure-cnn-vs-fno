@@ -1,4 +1,4 @@
-# Common Test I: Gravitational Lens Substructure Classification
+# Gravitational Lens Substructure Classification with ConvNeXt V2
 
 Multi-class classification of strong gravitational lensing images into three categories using a fine-tuned ConvNeXt V2 Tiny backbone with physics-motivated input channels.
 
@@ -48,7 +48,7 @@ The log-contrast cross-derivative (∂²/∂x∂y) from Ojha et al. (NeurIPS ML4
 | Ch 1 (grad mag) | 0.0589 | 0.1013 |
 | Ch 2 (Laplacian) | 0.0069 | 0.0099 |
 
-Ch 2's low std reflects sparse, high-response activations at subhalo locations, this is the discriminative signal and is not clipped.
+Ch 2's low std reflects sparse, high-response activations at subhalo locations — this is the discriminative signal and is not clipped.
 
 ---
 
@@ -67,7 +67,7 @@ Classification head: Dropout(0.3) → Linear(768, 3)
 **Why ConvNeXt V2 Tiny?**
 - Depthwise separable convolutions are efficient at 224×224 resolution
 - Global Response Normalization (GRN) suppresses feature redundancy
-- Tiny variant matches the dataset scale (30k images), larger variants risk overfitting
+- Tiny variant matches the dataset scale (30k images); larger variants risk overfitting
 - Pretrained weights give a strong initialization for domain adaptation
 - ViT rejected: global self-attention is the wrong inductive bias for localized substructure features
 - ImageNet statistics replaced by domain-computed channel stats (physics channels are not RGB)
@@ -80,7 +80,7 @@ Training all layers from the start risks catastrophic forgetting of the pretrain
 
 | Stage | Epochs | What trains | Head LR | Backbone LR |
 |-------|--------|-------------|---------|-------------|
-| 1 | 1–5 | Head only (backbone frozen) | 1e-3 | _ |
+| 1 | 1–5 | Head only (backbone frozen) | 1e-3 | — |
 | 2 | 6–30 | Full network | 1e-4 | 1e-5 |
 | 3 | 31–70 | Full network (resume from best S2) | 1e-5 | 1e-6 |
 | 4 | 71–90 | Full network (resume from best S3, local) | 1e-5 | 1e-6 |
@@ -95,7 +95,7 @@ Training all layers from the start risks catastrophic forgetting of the pretrain
 
 ## Data Augmentation
 
-Physics channels are computed at native 150×150 resolution **before** upsampling to 224×224 gradient operators act on original image structure, not interpolated pixels.
+Physics channels are computed at native 150×150 resolution **before** upsampling to 224×224 — gradient operators act on original image structure, not interpolated pixels.
 
 **Training transforms:** Resize(224) → RandomHorizontalFlip → RandomVerticalFlip → RandomRotation(180°) → Normalize
 
@@ -115,47 +115,40 @@ Predictions are averaged over 8 geometric transforms (4 rotations × 2 flip stat
 
 | Metric | Value |
 |--------|-------|
-| Val Macro AUC (TTA) | **~0.9700+** |
-| Val Accuracy | ~96% |
+| Val Macro AUC (TTA) | **0.9819** |
+| Val Accuracy | **91.19%** |
 
 **Per-class confusion analysis:**
 
 | Class | Correct | Error rate | Main confusion |
 |-------|---------|------------|----------------|
-| `no_sub` | 2493/2500 | 0.28% | Near-perfect, smooth rings are highly distinctive |
-| `subhalo` | 2194/2500 | 12.2% | Misclassified as `no_sub`, low-mass subhalos near noise floor |
-| `vortex` | 2390/2500 | 4.4% | Misclassified as `no_sub`, mild vortex perturbations resemble smooth rings |
+| `no_sub` | 2493/2500 | 0.28% | Near-perfect; smooth rings are highly distinctive |
+| `subhalo` | 2194/2500 | 12.2% | Misclassified as `no_sub`; low-mass subhalos near noise floor |
+| `vortex` | 2390/2500 | 4.4% | Misclassified as `no_sub`; mild vortex perturbations resemble smooth rings |
 
 ![Confusion Matrix](images_T1/confusion.png)
 
 The dominant confusion (subhalo → no_sub) is physically expected: low-mass dark matter subhalos produce perturbations at or below the noise floor that are morphologically indistinguishable from smooth mass distributions.
 
-
 ---
 
 ## Grad-CAM Validation
-
 
 ![Grad-CAM](images_T1/grad_cam.png)
 
 Attention maps confirm physically meaningful feature learning:
 
-- **no_sub (row 1):** Diffuse attention across the full ring — 
-  the model identifies the class by global ring symmetry, not any single point
-- **subhalo (row 2):** Attention concentrates on the point source below the arc —
-  the exact location of the subhalo mass concentration. Corner activations are present
-  and indicate residual spatial bias from ConvNeXt stem padding; they do not correspond
-  to any physical feature
-- **vortex (row 3):** Bilateral activation at both ring perturbation points — 
-  correctly captures the distributed, multi-point distortion pattern characteristic
-  of vortex substructure
+- **no_sub (row 1):** Diffuse attention across the full ring — the model identifies the class by global ring symmetry, not any single point
+- **subhalo (row 2):** Attention concentrates on the point source below the arc — the exact location of the subhalo mass concentration. Corner activations are present and indicate residual spatial bias from ConvNeXt stem padding; they do not correspond to any physical feature
+- **vortex (row 3):** Bilateral activation at both ring perturbation points — correctly captures the distributed, multi-point distortion pattern characteristic of vortex substructure
+
 ---
 
 ## Exploratory Data Analysis Summary
 
 - Dataset is perfectly balanced (no weighted sampling needed)
 - Per-class pixel intensity histograms confirm subhalo images have a heavier tail at high intensities due to localized bright point sources
-- Channel comparison across LensPINN options confirms gradient magnitude superiority at 150×150 resolution (see Section 2.5 of the notebook)
+- Channel comparison confirms gradient magnitude superiority at 150×150 resolution (see Section 2.5 of the notebook)
 
 ---
 
