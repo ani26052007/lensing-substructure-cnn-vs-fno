@@ -1,12 +1,12 @@
-# ML4Sci DeepLense: Neural Operators for Fast Simulation of Strong Gravitational Lensing Task IV
+# CNN and Neural Operator Approaches for Gravitational Lens Substructure Classification
 
-End-to-end deep learning project for classifying strong gravitational lensing images, submitted as part of the ML4Sci evaluation. Two tasks are covered: a common baseline test (Task I) and a neural operator extension (Task IV).
+End-to-end deep learning study on strong gravitational lensing image classification, comparing a transfer learning CNN baseline (ConvNeXt V2) against a Fourier Neural Operator approach with physics-motivated input engineering.
 
 ---
 
 ## Problem Statement
 
-Strong gravitational lensing occurs when a massive foreground object bends light from a background source, producing characteristic Einstein ring patterns. The substructure of the foreground lens, whether it contains dark matter subhalos, vortex perturbations, or is a smooth distribution, leaves distinct but subtle imprints on the ring morphology.
+Strong gravitational lensing occurs when a massive foreground object bends light from a background source, producing characteristic Einstein ring patterns. The substructure of the foreground lens — whether it contains dark matter subhalos, vortex perturbations, or is a smooth distribution — leaves distinct but subtle imprints on the ring morphology.
 
 The goal is to classify 150×150 grayscale lensing simulations into three categories:
 
@@ -33,7 +33,7 @@ Images are perfectly balanced, single-channel, min-max normalized to [0, 1].
 
 ## Tasks Covered
 
-### Common Task I: Common Test: ConvNeXt V2 Classifier
+### Task I: ConvNeXt V2 Classifier
 
 A transfer learning approach using a pretrained ConvNeXt V2 Tiny backbone with physics-motivated 3-channel input engineering and four-stage discriminative fine-tuning.
 
@@ -51,7 +51,7 @@ A transfer learning approach using a pretrained ConvNeXt V2 Tiny backbone with p
 
 ---
 
-### Specific Test IV: Fourier Neural Operator Classifier
+### Task IV: Fourier Neural Operator Classifier
 
 A neural operator approach replacing the standard CNN feature extractor with Fourier Neural Operator (FNO) blocks that learn in frequency space, combined with a polar-domain input representation designed specifically for FNO's spectral convolutions.
 
@@ -61,12 +61,12 @@ A neural operator approach replacing the standard CNN feature extractor with Fou
 **Key design choices:**
 - 4-channel polar-domain input (raw + polar transform + angular gradient + radial deviation)
 - FNO2d backbone with SpectralConv2d blocks (global receptive field from the first layer)
-- Trained from scratch, no pretrained FNO weights available for this domain
+- Trained from scratch — no pretrained FNO weights available for this domain
 - Per-class threshold grid search during TTA for accuracy optimization
 - Extensive channel ablation study
 
 **Result:** Val Macro AUC 0.9698, Val Accuracy 87.59%
-S
+
 ---
 
 ## Architecture Comparison
@@ -75,10 +75,10 @@ S
 |--------|----------------------|----------------|
 | Backbone | ConvNeXt V2 Tiny | FNO2d (4 blocks, width=64, modes=20) |
 | Input channels | 3 (raw + grad + Laplacian) | 4 (raw + polar + angular grad + radial dev) |
-| Feature extraction | Local (depthwise conv, ~7×7 effective) → stacked for global context | Global (FFT → spectral multiply → IFFT in a single layer) |
+| Feature extraction | Local (depthwise conv) → stacked for global context | Global (FFT → spectral multiply → IFFT in a single layer) |
 | Pretraining | ImageNet-1k (FCMAE, ~28M params) | None, trained from 30k lensing images |
 | Training strategy | 4-stage discriminative fine-tuning | Two-phase: full training → LR-reduced resume |
-| Val Macro AUC | ~0.9700+ | See Task IV notebook |
+| Val Macro AUC | 0.9819 | 0.9698 |
 
 ---
 
@@ -88,14 +88,14 @@ S
 
 Neither task uses raw single-channel input. Both leverage domain knowledge about lensing physics to construct richer multi-channel representations:
 
-- **Task I:** Differential operators (gradient magnitude, Laplacian) computed at native 150×150 resolution before upsampling, the operators act on original image structure
+- **Task I:** Differential operators (gradient magnitude, Laplacian) computed at native 150×150 resolution before upsampling — the operators act on original image structure, not interpolated pixels
 - **Task IV:** Polar coordinate transformation followed by angular and radial symmetry-breaking channels, specifically designed to map lensing physics into frequency-domain-friendly representations
 
 ### CNN vs Neural Operator: Theoretical Motivation
 
 The Einstein ring is a global, ring-shaped structure. Standard CNNs require many stacked layers to accumulate global receptive fields, while a single FNO spectral convolution sees the entire image. The FNO's 20 retained frequency modes (20/150 ≈ 13% of the spectrum) target the arc morphology frequency band, roughly 7–75 pixel wavelengths.
 
-However, the lack of pretrained FNO weights means the neural operator must learn all representations from 30k samples, whereas ConvNeXt V2 brings rich low-level feature extractors from ImageNet. This pretraining advantage is the dominant factor in the performance gap between the two tasks.
+The lack of pretrained FNO weights means the neural operator must learn all representations from 30k samples, whereas ConvNeXt V2 brings rich low-level feature extractors from ImageNet. This pretraining advantage is the dominant factor in the performance gap between the two tasks.
 
 ### Validation of Physical Correctness
 
