@@ -33,12 +33,12 @@ Images are perfectly balanced, single-channel, min-max normalized to [0, 1].
 
 ## Tasks Covered
 
-### Task I: ConvNeXt V2 Classifier
+### Task 1: ConvNeXt V2 Classifier
 
 A transfer learning approach using a pretrained ConvNeXt V2 Tiny backbone with physics-motivated 3-channel input engineering and four-stage discriminative fine-tuning.
 
-**Notebook:** `common-task-1.ipynb`  
-**README:** `README_Common_test_1.md`
+**Notebook:** `task-1.ipynb`  
+**README:** `README_Task_1.md`
 
 **Key design choices:**
 - Physics-motivated 3-channel input (raw + gradient magnitude + Laplacian)
@@ -51,12 +51,12 @@ A transfer learning approach using a pretrained ConvNeXt V2 Tiny backbone with p
 
 ---
 
-### Task IV: Fourier Neural Operator Classifier
+### Task 2: Fourier Neural Operator Classifier
 
 A neural operator approach replacing the standard CNN feature extractor with Fourier Neural Operator (FNO) blocks that learn in frequency space, combined with a polar-domain input representation designed specifically for FNO's spectral convolutions.
 
-**Notebooks:** `fno_final.ipynb`, `channel_analysis_Task_4.ipynb`  
-**README:** `README_Task4_FNO.md`
+**Notebooks:** `fno.ipynb`, `channel_analysis_Task_4.ipynb`  
+**README:** `README_Task_2_FNO.md`
 
 **Key design choices:**
 - 4-channel polar-domain input (raw + polar transform + angular gradient + radial deviation)
@@ -71,7 +71,7 @@ A neural operator approach replacing the standard CNN feature extractor with Fou
 
 ## Architecture Comparison
 
-| Aspect | Task I (ConvNeXt V2) | Task IV (FNO) |
+| Aspect | Task 1 (ConvNeXt V2) | Task 2 (FNO) |
 |--------|----------------------|----------------|
 | Backbone | ConvNeXt V2 Tiny | FNO2d (4 blocks, width=64, modes=20) |
 | Input channels | 3 (raw + grad + Laplacian) | 4 (raw + polar + angular grad + radial dev) |
@@ -88,8 +88,8 @@ A neural operator approach replacing the standard CNN feature extractor with Fou
 
 Neither task uses raw single-channel input. Both leverage domain knowledge about lensing physics to construct richer multi-channel representations:
 
-- **Task I:** Differential operators (gradient magnitude, Laplacian) computed at native 150×150 resolution before upsampling — the operators act on original image structure, not interpolated pixels
-- **Task IV:** Polar coordinate transformation followed by angular and radial symmetry-breaking channels, specifically designed to map lensing physics into frequency-domain-friendly representations
+- **Task 1:** Differential operators (gradient magnitude, Laplacian) computed at native 150×150 resolution before upsampling — the operators act on original image structure, not interpolated pixels
+- **Task 2:** Polar coordinate transformation followed by angular and radial symmetry-breaking channels, specifically designed to map lensing physics into frequency-domain-friendly representations
 
 ### CNN vs Neural Operator: Theoretical Motivation
 
